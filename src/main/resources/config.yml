@@ -1,0 +1,8 @@
+prefix: "&6[Foundation]&r"
+
+messages:
+  awakened: "Project Foundation has awakened."
+  subtitle: "Welcome to the beginning of something great."
+  first-join: "Welcome to Project Foundation, %player%."
+  first-join-subtitle: "Your journey begins today."
+  welcome-back: "Welcome back, %player%."

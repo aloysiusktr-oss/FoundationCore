@@ -1,0 +1,17 @@
+name: FoundationCore
+version: '0.1.0-alpha'
+main: com.projectfoundation.core.FoundationCore
+api-version: '1.21'
+
+author: Aloysius
+
+commands:
+  foundation:
+    description: Main FoundationCore command
+    usage: /foundation
+    permission: foundation.admin
+
+    permissions:
+      foundation.admin:
+        description: Allows use of FoundationCore admin commands
+        default: op
