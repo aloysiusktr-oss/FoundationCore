@@ -1,6 +1,6 @@
-package com.projectfoundation.core.service;
+package service;
 
-import com.projectfoundation.core.gui.FoundationMenu;
+import gui.FoundationMenu;
 import org.bukkit.entity.Player;
 
 import java.util.HashMap;

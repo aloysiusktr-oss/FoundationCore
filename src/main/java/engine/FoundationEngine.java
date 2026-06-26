@@ -1,7 +1,7 @@
-package com.projectfoundation.core.engine;
+package engine;
 
-import com.projectfoundation.core.service.FoundationService;
-import com.projectfoundation.core.service.ServiceRegistry;
+import service.FoundationService;
+import service.ServiceRegistry;
 
 import java.util.ArrayList;
 import java.util.List;

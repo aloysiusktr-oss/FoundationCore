@@ -1,4 +1,6 @@
-package com.projectfoundation.core.profile;
+package profile;
+
+import attribute.AttributeMap;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -8,12 +10,14 @@ public class PlayerProfile {
     private final UUID uuid;
     private String username;
 
-    private final Instant firstJoin;
+    private Instant firstJoin;
     private Instant lastSeen;
 
     private int coins;
     private int level;
     private int experience;
+
+    private final AttributeMap attributes = new AttributeMap();
 
     public PlayerProfile(UUID uuid, String username) {
         this.uuid = uuid;
@@ -53,8 +57,16 @@ public class PlayerProfile {
         return experience;
     }
 
+    public AttributeMap getAttributes() {
+        return attributes;
+    }
+
     public void setUsername(String username) {
         this.username = username;
+    }
+
+    public void setFirstJoin(Instant firstJoin) {
+        this.firstJoin = firstJoin;
     }
 
     public void updateLastSeen() {

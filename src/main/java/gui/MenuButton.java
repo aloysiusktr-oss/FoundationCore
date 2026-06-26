@@ -1,4 +1,4 @@
-package com.projectfoundation.core.gui;
+package gui;
 
 import org.bukkit.inventory.ItemStack;
 

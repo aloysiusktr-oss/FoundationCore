@@ -1,7 +1,7 @@
-package com.projectfoundation.core.player;
+package player;
 
-import com.projectfoundation.core.service.PlayerProfileService;
-import com.projectfoundation.core.service.PlayerService;
+import service.PlayerProfileService;
+import service.PlayerService;
 import org.bukkit.ChatColor;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;

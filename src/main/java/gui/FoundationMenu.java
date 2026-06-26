@@ -1,6 +1,6 @@
-package com.projectfoundation.core.gui;
+package gui;
 
-import com.projectfoundation.core.service.GUIService;
+import service.GUIService;
 
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;

@@ -1,20 +1,22 @@
 package com.projectfoundation.core;
 
-import com.projectfoundation.core.engine.FoundationEngine;
-import com.projectfoundation.core.gui.MenuListener;
-import com.projectfoundation.core.gui.TestMenu;
-import com.projectfoundation.core.player.PlayerListener;
-import com.projectfoundation.core.profile.PlayerProfile;
-import com.projectfoundation.core.profile.PlayerProfileStorage;
-import com.projectfoundation.core.service.ConfigService;
-import com.projectfoundation.core.service.GUIService;
-import com.projectfoundation.core.service.PlayerProfileService;
-import com.projectfoundation.core.service.PlayerService;
-import com.projectfoundation.core.storage.PlayerDataStorage;
+import engine.FoundationEngine;
+import gui.MenuListener;
+import gui.TestMenu;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
+import player.PlayerListener;
+import profile.PlayerProfile;
+import profile.PlayerProfileStorage;
+import service.ConfigService;
+import service.EconomyService;
+import service.GUIService;
+import service.PlayerProfileService;
+import service.PlayerService;
+import storage.PlayerDataStorage;
 
 public final class FoundationCore extends JavaPlugin {
 
@@ -40,11 +42,14 @@ public final class FoundationCore extends JavaPlugin {
                 new PlayerProfileStorage(this)
         );
 
+        EconomyService economyService = new EconomyService(profileService);
+
         this.guiService = new GUIService();
 
         engine.registerService(ConfigService.class, configService);
         engine.registerService(PlayerService.class, playerService);
         engine.registerService(PlayerProfileService.class, profileService);
+        engine.registerService(EconomyService.class, economyService);
         engine.registerService(GUIService.class, guiService);
         engine.start();
 
@@ -105,25 +110,73 @@ public final class FoundationCore extends JavaPlugin {
                 return true;
 
             case "menu":
-                if (sender instanceof org.bukkit.entity.Player player) {
-                    testMenu.open(player, guiService);
-                } else {
-                    sender.sendMessage(PREFIX + ChatColor.RED + "Only players can use this command.");
-                }
+                handleMenuCommand(sender);
                 return true;
 
             case "profile":
-                if (sender instanceof org.bukkit.entity.Player player) {
-                    sendProfileMessage(sender, player);
-                } else {
-                    sender.sendMessage(PREFIX + ChatColor.RED + "Only players can use this command.");
-                }
+                handleProfileCommand(sender);
+                return true;
+
+            case "coins":
+                handleCoinsCommand(sender, args);
                 return true;
 
             default:
                 sender.sendMessage(PREFIX + ChatColor.RED + "Unknown command. Use /foundation help.");
                 return true;
         }
+    }
+
+    private void handleMenuCommand(CommandSender sender) {
+        if (!(sender instanceof Player player)) {
+            sender.sendMessage(PREFIX + ChatColor.RED + "Only players can use this command.");
+            return;
+        }
+
+        testMenu.open(player, guiService);
+    }
+
+    private void handleProfileCommand(CommandSender sender) {
+        if (!(sender instanceof Player player)) {
+            sender.sendMessage(PREFIX + ChatColor.RED + "Only players can use this command.");
+            return;
+        }
+
+        sendProfileMessage(sender, player);
+    }
+
+    private void handleCoinsCommand(CommandSender sender, String[] args) {
+        if (!(sender instanceof Player player)) {
+            sender.sendMessage(PREFIX + ChatColor.RED + "Only players can use this command.");
+            return;
+        }
+
+        EconomyService economyService = engine.services().get(EconomyService.class);
+
+        if (args.length == 1) {
+            sender.sendMessage(PREFIX + ChatColor.GOLD + "Coins: " + ChatColor.WHITE + economyService.getCoins(player));
+            return;
+        }
+
+        if (args.length == 3 && args[1].equalsIgnoreCase("add")) {
+            try {
+                int amount = Integer.parseInt(args[2]);
+
+                if (amount <= 0) {
+                    sender.sendMessage(PREFIX + ChatColor.RED + "Amount must be greater than 0.");
+                    return;
+                }
+
+                economyService.addCoins(player, amount);
+                sender.sendMessage(PREFIX + ChatColor.GREEN + "Added " + amount + " coins.");
+            } catch (NumberFormatException exception) {
+                sender.sendMessage(PREFIX + ChatColor.RED + "Please enter a valid number.");
+            }
+
+            return;
+        }
+
+        sender.sendMessage(PREFIX + ChatColor.RED + "Usage: /foundation coins or /foundation coins add <amount>");
     }
 
     private void sendFoundationMessage(CommandSender sender, ConfigService configService) {
@@ -146,6 +199,8 @@ public final class FoundationCore extends JavaPlugin {
         sender.sendMessage(ChatColor.GRAY + "/foundation reload" + ChatColor.WHITE + " - Reloads config.yml.");
         sender.sendMessage(ChatColor.GRAY + "/foundation menu" + ChatColor.WHITE + " - Opens the test menu.");
         sender.sendMessage(ChatColor.GRAY + "/foundation profile" + ChatColor.WHITE + " - Shows your player profile.");
+        sender.sendMessage(ChatColor.GRAY + "/foundation coins" + ChatColor.WHITE + " - Shows your coins.");
+        sender.sendMessage(ChatColor.GRAY + "/foundation coins add <amount>" + ChatColor.WHITE + " - Adds coins for testing.");
     }
 
     private void sendVersionMessage(CommandSender sender) {
@@ -154,7 +209,7 @@ public final class FoundationCore extends JavaPlugin {
         sender.sendMessage(ChatColor.GRAY + "Stage: " + ChatColor.WHITE + STAGE);
     }
 
-    private void sendProfileMessage(CommandSender sender, org.bukkit.entity.Player player) {
+    private void sendProfileMessage(CommandSender sender, Player player) {
         PlayerProfileService profileService = engine.services().get(PlayerProfileService.class);
         PlayerProfile profile = profileService.get(player);
 

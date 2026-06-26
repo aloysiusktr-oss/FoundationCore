@@ -1,5 +1,6 @@
-package com.projectfoundation.core.profile;
+package profile;
 
+import attribute.Attribute;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -33,10 +34,18 @@ public class PlayerProfileStorage {
 
         PlayerProfile profile = new PlayerProfile(uuid, username);
         profile.setUsername(config.getString("username", username));
-        profile.setLastSeen(Instant.parse(config.getString("lastSeen", Instant.now().toString())));
+        profile.setFirstJoin(parseInstant(config.getString("firstJoin"), Instant.now()));
+        profile.setLastSeen(parseInstant(config.getString("lastSeen"), Instant.now()));
         profile.setCoins(config.getInt("coins", 0));
         profile.setLevel(config.getInt("level", 1));
         profile.setExperience(config.getInt("experience", 0));
+
+        for (Attribute attribute : Attribute.values()) {
+            String path = "attributes." + attribute.name();
+            if (config.contains(path)) {
+                profile.getAttributes().set(attribute, config.getDouble(path));
+            }
+        }
 
         return profile;
     }
@@ -53,11 +62,27 @@ public class PlayerProfileStorage {
         config.set("level", profile.getLevel());
         config.set("experience", profile.getExperience());
 
+        for (Attribute attribute : Attribute.values()) {
+            config.set("attributes." + attribute.name(), profile.getAttributes().get(attribute));
+        }
+
         try {
             config.save(file);
         } catch (IOException e) {
             plugin.getLogger().severe("Could not save profile for " + profile.getUsername());
             e.printStackTrace();
+        }
+    }
+
+    private Instant parseInstant(String value, Instant fallback) {
+        if (value == null || value.isBlank()) {
+            return fallback;
+        }
+
+        try {
+            return Instant.parse(value);
+        } catch (Exception exception) {
+            return fallback;
         }
     }
 }

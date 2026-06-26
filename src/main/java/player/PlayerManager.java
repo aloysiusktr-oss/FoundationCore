@@ -1,6 +1,6 @@
-package com.projectfoundation.core.player;
+package player;
 
-import com.projectfoundation.core.storage.PlayerDataStorage;
+import storage.PlayerDataStorage;
 import org.bukkit.entity.Player;
 
 import java.util.HashMap;

@@ -1,7 +1,7 @@
-package com.projectfoundation.core.service;
+package service;
 
-import com.projectfoundation.core.profile.PlayerProfile;
-import com.projectfoundation.core.profile.PlayerProfileStorage;
+import profile.PlayerProfile;
+import profile.PlayerProfileStorage;
 import org.bukkit.entity.Player;
 
 import java.util.HashMap;

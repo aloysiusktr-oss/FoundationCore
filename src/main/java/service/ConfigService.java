@@ -1,4 +1,4 @@
-package com.projectfoundation.core.service;
+package service;
 
 import org.bukkit.ChatColor;
 import org.bukkit.plugin.java.JavaPlugin;

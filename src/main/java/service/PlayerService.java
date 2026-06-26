@@ -1,8 +1,8 @@
-package com.projectfoundation.core.service;
+package service;
 
-import com.projectfoundation.core.player.FoundationPlayer;
-import com.projectfoundation.core.player.PlayerManager;
-import com.projectfoundation.core.storage.PlayerDataStorage;
+import player.FoundationPlayer;
+import player.PlayerManager;
+import storage.PlayerDataStorage;
 import org.bukkit.entity.Player;
 
 public class PlayerService implements FoundationService {

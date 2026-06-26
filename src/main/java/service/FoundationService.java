@@ -1,4 +1,4 @@
-package com.projectfoundation.core.service;
+package service;
 
 public interface FoundationService {
 

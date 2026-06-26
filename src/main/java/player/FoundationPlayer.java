@@ -1,4 +1,4 @@
-package com.projectfoundation.core.player;
+package player;
 
 import java.util.UUID;
 
