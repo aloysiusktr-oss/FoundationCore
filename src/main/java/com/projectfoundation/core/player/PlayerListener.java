@@ -1,5 +1,6 @@
 package com.projectfoundation.core.player;
 
+import com.projectfoundation.core.service.PlayerProfileService;
 import com.projectfoundation.core.service.PlayerService;
 import org.bukkit.ChatColor;
 import org.bukkit.event.EventHandler;
@@ -10,14 +11,17 @@ import org.bukkit.event.player.PlayerQuitEvent;
 public class PlayerListener implements Listener {
 
     private final PlayerService playerService;
+    private final PlayerProfileService profileService;
 
-    public PlayerListener(PlayerService playerService) {
+    public PlayerListener(PlayerService playerService, PlayerProfileService profileService) {
         this.playerService = playerService;
+        this.profileService = profileService;
     }
 
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
         FoundationPlayer foundationPlayer = playerService.load(event.getPlayer());
+        profileService.load(event.getPlayer());
 
         if (foundationPlayer.isFirstJoin()) {
             event.getPlayer().sendMessage(ChatColor.GOLD + "Welcome to Project Foundation, " + foundationPlayer.getName() + ".");
@@ -30,6 +34,7 @@ public class PlayerListener implements Listener {
 
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent event) {
+        profileService.unload(event.getPlayer());
         playerService.unload(event.getPlayer());
     }
 }
