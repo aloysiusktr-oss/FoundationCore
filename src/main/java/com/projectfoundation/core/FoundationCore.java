@@ -17,6 +17,7 @@ import service.GUIService;
 import service.PlayerProfileService;
 import service.PlayerService;
 import storage.PlayerDataStorage;
+import attribute.Attribute;
 
 public final class FoundationCore extends JavaPlugin {
 
@@ -121,6 +122,10 @@ public final class FoundationCore extends JavaPlugin {
                 handleCoinsCommand(sender, args);
                 return true;
 
+            case "attributes":
+                handleAttributesCommand(sender);
+                return true;
+
             default:
                 sender.sendMessage(PREFIX + ChatColor.RED + "Unknown command. Use /foundation help.");
                 return true;
@@ -201,6 +206,7 @@ public final class FoundationCore extends JavaPlugin {
         sender.sendMessage(ChatColor.GRAY + "/foundation profile" + ChatColor.WHITE + " - Shows your player profile.");
         sender.sendMessage(ChatColor.GRAY + "/foundation coins" + ChatColor.WHITE + " - Shows your coins.");
         sender.sendMessage(ChatColor.GRAY + "/foundation coins add <amount>" + ChatColor.WHITE + " - Adds coins for testing.");
+        sender.sendMessage(ChatColor.GRAY + "/foundation attributes" + ChatColor.WHITE + " - Shows all player attributes.");
     }
 
     private void sendVersionMessage(CommandSender sender) {
@@ -226,5 +232,62 @@ public final class FoundationCore extends JavaPlugin {
         sender.sendMessage(ChatColor.GRAY + "First Join: " + ChatColor.WHITE + profile.getFirstJoin());
         sender.sendMessage(ChatColor.GRAY + "Last Seen: " + ChatColor.WHITE + profile.getLastSeen());
         sender.sendMessage(ChatColor.GOLD + "=============================================");
+    }
+
+    private void handleAttributesCommand(CommandSender sender) {
+
+        if (!(sender instanceof Player player)) {
+            sender.sendMessage(PREFIX + ChatColor.RED + "Only players can use this command.");
+            return;
+        }
+
+        PlayerProfileService profileService =
+                engine.services().get(PlayerProfileService.class);
+
+        PlayerProfile profile = profileService.get(player);
+
+        if (profile == null) {
+            sender.sendMessage(PREFIX + ChatColor.RED + "Your profile is not loaded.");
+            return;
+        }
+
+        sender.sendMessage(ChatColor.GOLD + "============== ATTRIBUTES ==============");
+
+        for (Attribute attribute : Attribute.values()) {
+
+            double value = profile.getAttributes().get(attribute);
+
+            sender.sendMessage(
+                    ChatColor.YELLOW +
+                            formatAttribute(attribute) +
+                            ChatColor.GRAY +
+                            " : " +
+                            ChatColor.WHITE +
+                            value
+            );
+        }
+
+        sender.sendMessage(ChatColor.GOLD + "========================================");
+    }
+    private String formatAttribute(Attribute attribute) {
+
+        String name = attribute.name().toLowerCase().replace("_", " ");
+
+        String[] words = name.split(" ");
+
+        StringBuilder builder = new StringBuilder();
+
+        for (String word : words) {
+
+            builder.append(
+                    Character.toUpperCase(word.charAt(0))
+            );
+
+            builder.append(word.substring(1));
+
+            builder.append(" ");
+        }
+
+        return builder.toString().trim();
     }
 }
