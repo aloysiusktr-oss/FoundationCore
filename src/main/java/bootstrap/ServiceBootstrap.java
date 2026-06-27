@@ -2,7 +2,6 @@ package bootstrap;
 
 import engine.FoundationEngine;
 import item.ItemDataKeys;
-import item.ItemRegistry;
 import org.bukkit.plugin.java.JavaPlugin;
 import profile.PlayerProfileStorage;
 import service.ConfigService;
@@ -12,6 +11,7 @@ import service.ItemService;
 import service.PlayerProfileService;
 import service.PlayerService;
 import storage.PlayerDataStorage;
+import item.ItemRegistry;
 
 public class ServiceBootstrap {
 

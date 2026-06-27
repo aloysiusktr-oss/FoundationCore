@@ -11,7 +11,6 @@ import engine.FoundationEngine;
 import gui.TestMenu;
 import item.FoundationItem;
 import item.ItemDataKeys;
-import item.ItemRegistry;
 import item.ItemStackFactory;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -24,7 +23,10 @@ import service.ConfigService;
 import service.EconomyService;
 import service.GUIService;
 import service.PlayerProfileService;
-import listener.EquipmentListener;
+import item.ItemRegistry;
+import combat.DamageCalculator;
+import combat.DamageResult;
+import attribute.Attribute;
 
 public final class FoundationCore extends JavaPlugin {
 
@@ -130,6 +132,10 @@ public final class FoundationCore extends JavaPlugin {
 
             case "clearattributes":
                 handleClearAttributesCommand(sender);
+                return true;
+
+            case "damagetest":
+                handleDamageTestCommand(sender);
                 return true;
 
             default:
@@ -303,6 +309,7 @@ public final class FoundationCore extends JavaPlugin {
         sender.sendMessage(ChatColor.GRAY + "/foundation attributetest" + ChatColor.WHITE + " - Adds a temporary test Strength modifier.");
         sender.sendMessage(ChatColor.GRAY + "/foundation testitem" + ChatColor.WHITE + " - Gives a test sword.");
         sender.sendMessage(ChatColor.GRAY + "/foundation clearattributes" + ChatColor.WHITE + " - Clears temporary attribute modifiers.");
+        sender.sendMessage(ChatColor.GRAY + "/foundation damagetest" + ChatColor.WHITE + " - Calculates your current damage.");
     }
 
     private void sendVersionMessage(CommandSender sender) {
@@ -364,5 +371,49 @@ public final class FoundationCore extends JavaPlugin {
         profile.getAttributes().set(Attribute.CRIT_DAMAGE, Attribute.CRIT_DAMAGE.getDefaultValue());
 
         sender.sendMessage(PREFIX + ChatColor.GREEN + "Temporary attribute modifiers cleared.");
+    }
+
+    private void handleDamageTestCommand(CommandSender sender) {
+
+        if (!(sender instanceof org.bukkit.entity.Player player)) {
+            sender.sendMessage(PREFIX + ChatColor.RED + "Only players can use this command.");
+            return;
+        }
+
+        PlayerProfileService profileService = engine.services().get(PlayerProfileService.class);
+
+        PlayerProfile profile = profileService.get(player);
+
+        if (profile == null) {
+            sender.sendMessage(PREFIX + ChatColor.RED + "Profile not loaded.");
+            return;
+        }
+
+        DamageCalculator calculator = new DamageCalculator();
+
+        double strength = profile.getAttributes().get(Attribute.STRENGTH);
+        double critChance = profile.getAttributes().get(Attribute.CRIT_CHANCE);
+        double critDamage = profile.getAttributes().get(Attribute.CRIT_DAMAGE);
+
+        DamageResult result = calculator.calculate(
+                10.0,
+                strength,
+                critChance,
+                critDamage
+        );
+
+        sender.sendMessage(ChatColor.GOLD + "========== DAMAGE TEST ==========");
+        sender.sendMessage(ChatColor.GRAY + "Base Damage: " + ChatColor.WHITE + "10");
+        sender.sendMessage(ChatColor.GRAY + "Strength: " + ChatColor.WHITE + strength);
+        sender.sendMessage(ChatColor.GRAY + "Crit Chance: " + ChatColor.WHITE + critChance + "%");
+        sender.sendMessage(ChatColor.GRAY + "Crit Damage: " + ChatColor.WHITE + critDamage + "%");
+        sender.sendMessage("");
+
+        if (result.isCritical()) {
+            sender.sendMessage(ChatColor.RED + "CRITICAL HIT!");
+        }
+
+        sender.sendMessage(ChatColor.GREEN + "Final Damage: " + ChatColor.WHITE + result.getDamage());
+        sender.sendMessage(ChatColor.GOLD + "===============================");
     }
 }

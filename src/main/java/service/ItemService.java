@@ -2,10 +2,10 @@ package service;
 
 import item.FoundationItem;
 import item.ItemDataKeys;
-import item.ItemRegistry;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
+import item.ItemRegistry;
 
 public class ItemService implements FoundationService {
 

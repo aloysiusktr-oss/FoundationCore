@@ -4,8 +4,8 @@ import attribute.Attribute;
 import item.FoundationItem;
 import item.ItemBuilder;
 import item.ItemRarity;
-import item.ItemRegistry;
 import item.ItemType;
+import item.ItemRegistry;
 
 public class ItemBootstrap {
 
