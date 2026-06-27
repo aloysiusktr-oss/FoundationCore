@@ -27,6 +27,10 @@ import item.ItemRegistry;
 import combat.DamageCalculator;
 import combat.DamageResult;
 import attribute.Attribute;
+import entity.FoundationMob;
+import entity.MobRegistry;
+import service.MobService;
+import entity.MobDataKeys;
 
 public final class FoundationCore extends JavaPlugin {
 
@@ -39,6 +43,7 @@ public final class FoundationCore extends JavaPlugin {
     private GUIService guiService;
     private ItemRegistry itemRegistry;
     private ItemDataKeys itemDataKeys;
+    private MobRegistry mobRegistry;
 
     @Override
     public void onEnable() {
@@ -46,6 +51,25 @@ public final class FoundationCore extends JavaPlugin {
         this.itemDataKeys = new ItemDataKeys(this);
         this.itemRegistry = new ItemRegistry();
         this.testMenu = new TestMenu();
+        this.mobRegistry = new MobRegistry();
+
+        MobService mobService = new MobService(
+                mobRegistry,
+                new MobDataKeys(this)
+        );
+
+        engine.registerService(MobService.class, mobService);
+
+        FoundationMob trainingZombie = new FoundationMob(
+                "training_zombie",
+                "Training Zombie",
+                1,
+                100,
+                10,
+                0
+        );
+
+        mobRegistry.register(trainingZombie);
 
         ServiceBootstrap serviceBootstrap = new ServiceBootstrap(
                 this,
@@ -136,6 +160,10 @@ public final class FoundationCore extends JavaPlugin {
 
             case "damagetest":
                 handleDamageTestCommand(sender);
+                return true;
+
+            case "spawnmob":
+                handleSpawnMobCommand(sender);
                 return true;
 
             default:
@@ -310,6 +338,7 @@ public final class FoundationCore extends JavaPlugin {
         sender.sendMessage(ChatColor.GRAY + "/foundation testitem" + ChatColor.WHITE + " - Gives a test sword.");
         sender.sendMessage(ChatColor.GRAY + "/foundation clearattributes" + ChatColor.WHITE + " - Clears temporary attribute modifiers.");
         sender.sendMessage(ChatColor.GRAY + "/foundation damagetest" + ChatColor.WHITE + " - Calculates your current damage.");
+        sender.sendMessage(ChatColor.GRAY + "/foundation spawnmob" + ChatColor.WHITE + " - Spawns a training zombie.");
     }
 
     private void sendVersionMessage(CommandSender sender) {
@@ -415,5 +444,20 @@ public final class FoundationCore extends JavaPlugin {
 
         sender.sendMessage(ChatColor.GREEN + "Final Damage: " + ChatColor.WHITE + result.getDamage());
         sender.sendMessage(ChatColor.GOLD + "===============================");
+    }
+    private void handleSpawnMobCommand(CommandSender sender) {
+        if (!(sender instanceof Player player)) {
+            sender.sendMessage(PREFIX + ChatColor.RED + "Only players can use this command.");
+            return;
+        }
+
+        MobService mobService = engine.services().get(MobService.class);
+
+        if (mobService.spawn("training_zombie", player.getLocation()) == null) {
+            sender.sendMessage(PREFIX + ChatColor.RED + "Could not spawn training zombie.");
+            return;
+        }
+
+        sender.sendMessage(PREFIX + ChatColor.GREEN + "Training Zombie spawned.");
     }
 }

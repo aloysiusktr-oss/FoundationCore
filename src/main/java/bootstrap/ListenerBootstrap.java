@@ -2,11 +2,13 @@ package bootstrap;
 
 import engine.FoundationEngine;
 import gui.MenuListener;
+import listener.CombatListener;
 import listener.EquipmentListener;
 import org.bukkit.plugin.java.JavaPlugin;
 import player.PlayerListener;
 import service.GUIService;
 import service.ItemService;
+import service.MobService;
 import service.PlayerProfileService;
 import service.PlayerService;
 
@@ -25,6 +27,7 @@ public class ListenerBootstrap {
         PlayerProfileService profileService = engine.services().get(PlayerProfileService.class);
         GUIService guiService = engine.services().get(GUIService.class);
         ItemService itemService = engine.services().get(ItemService.class);
+        MobService mobService = engine.services().get(MobService.class);
 
         plugin.getServer().getPluginManager().registerEvents(
                 new PlayerListener(playerService, profileService),
@@ -38,6 +41,11 @@ public class ListenerBootstrap {
 
         plugin.getServer().getPluginManager().registerEvents(
                 new EquipmentListener(itemService, profileService),
+                plugin
+        );
+
+        plugin.getServer().getPluginManager().registerEvents(
+                new CombatListener(profileService, mobService),
                 plugin
         );
     }

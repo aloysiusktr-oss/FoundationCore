@@ -63,7 +63,7 @@ public class PlayerProfileStorage {
         config.set("experience", profile.getExperience());
 
         for (Attribute attribute : Attribute.values()) {
-            config.set("attributes." + attribute.name(), profile.getAttributes().get(attribute));
+            config.set("attributes." + attribute.name(), profile.getAttributes().getBase(attribute));
         }
 
         try {

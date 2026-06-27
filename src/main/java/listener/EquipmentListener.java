@@ -54,4 +54,20 @@ public class EquipmentListener implements Listener {
             ));
         }
     }
+    @EventHandler
+    public void onPlayerJoin(org.bukkit.event.player.PlayerJoinEvent event) {
+        PlayerProfile profile = profileService.get(event.getPlayer());
+
+        if (profile != null) {
+            profile.getAttributes().clearModifiers(HELD_ITEM_SOURCE);
+        }
+    }
+    @EventHandler
+    public void onPlayerQuit(org.bukkit.event.player.PlayerQuitEvent event) {
+        PlayerProfile profile = profileService.get(event.getPlayer());
+
+        if (profile != null) {
+            profile.getAttributes().clearModifiers(HELD_ITEM_SOURCE);
+        }
+    }
 }
