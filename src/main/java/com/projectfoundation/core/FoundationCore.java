@@ -1,23 +1,30 @@
 package com.projectfoundation.core;
 
+import attribute.Attribute;
+import attribute.AttributeModifier;
+import attribute.ModifierOperation;
+import bootstrap.CommandBootstrap;
+import bootstrap.ItemBootstrap;
+import bootstrap.ListenerBootstrap;
+import bootstrap.ServiceBootstrap;
 import engine.FoundationEngine;
-import gui.MenuListener;
 import gui.TestMenu;
+import item.FoundationItem;
+import item.ItemDataKeys;
+import item.ItemRegistry;
+import item.ItemStackFactory;
 import org.bukkit.ChatColor;
+import org.bukkit.Material;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
-import player.PlayerListener;
 import profile.PlayerProfile;
-import profile.PlayerProfileStorage;
 import service.ConfigService;
 import service.EconomyService;
 import service.GUIService;
 import service.PlayerProfileService;
-import service.PlayerService;
-import storage.PlayerDataStorage;
-import attribute.Attribute;
+import listener.EquipmentListener;
 
 public final class FoundationCore extends JavaPlugin {
 
@@ -28,48 +35,35 @@ public final class FoundationCore extends JavaPlugin {
     private FoundationEngine engine;
     private TestMenu testMenu;
     private GUIService guiService;
+    private ItemRegistry itemRegistry;
+    private ItemDataKeys itemDataKeys;
 
     @Override
     public void onEnable() {
         this.engine = new FoundationEngine();
-
-        ConfigService configService = new ConfigService(this);
-
-        PlayerService playerService = new PlayerService(
-                new PlayerDataStorage(this)
-        );
-
-        PlayerProfileService profileService = new PlayerProfileService(
-                new PlayerProfileStorage(this)
-        );
-
-        EconomyService economyService = new EconomyService(profileService);
-
-        this.guiService = new GUIService();
-
-        engine.registerService(ConfigService.class, configService);
-        engine.registerService(PlayerService.class, playerService);
-        engine.registerService(PlayerProfileService.class, profileService);
-        engine.registerService(EconomyService.class, economyService);
-        engine.registerService(GUIService.class, guiService);
-        engine.start();
-
-        getServer().getPluginManager().registerEvents(
-                new PlayerListener(playerService, profileService),
-                this
-        );
-
+        this.itemDataKeys = new ItemDataKeys(this);
+        this.itemRegistry = new ItemRegistry();
         this.testMenu = new TestMenu();
 
-        getServer().getPluginManager().registerEvents(
-                new MenuListener(guiService),
-                this
+        ServiceBootstrap serviceBootstrap = new ServiceBootstrap(
+                this,
+                engine,
+                itemRegistry,
+                itemDataKeys
         );
+        serviceBootstrap.register();
 
-        getLogger().info("=================================");
-        getLogger().info(" " + PROJECT_NAME + " has awakened.");
-        getLogger().info(" FoundationCore v" + getDescription().getVersion());
-        getLogger().info("=================================");
+        this.guiService = serviceBootstrap.getGuiService();
+
+        new ItemBootstrap(itemRegistry).register();
+
+        new ListenerBootstrap(this, engine).register();
+
+        new CommandBootstrap(this).register();
+
+        engine.start();
+
+        logStartup();
     }
 
     @Override
@@ -126,10 +120,29 @@ public final class FoundationCore extends JavaPlugin {
                 handleAttributesCommand(sender);
                 return true;
 
+            case "attributetest":
+                handleAttributeTestCommand(sender);
+                return true;
+
+            case "testitem":
+                handleTestItemCommand(sender);
+                return true;
+
+            case "clearattributes":
+                handleClearAttributesCommand(sender);
+                return true;
+
             default:
                 sender.sendMessage(PREFIX + ChatColor.RED + "Unknown command. Use /foundation help.");
                 return true;
         }
+    }
+
+    private void logStartup() {
+        getLogger().info("=================================");
+        getLogger().info(" " + PROJECT_NAME + " has awakened.");
+        getLogger().info(" FoundationCore v" + getDescription().getVersion());
+        getLogger().info("=================================");
     }
 
     private void handleMenuCommand(CommandSender sender) {
@@ -184,6 +197,86 @@ public final class FoundationCore extends JavaPlugin {
         sender.sendMessage(PREFIX + ChatColor.RED + "Usage: /foundation coins or /foundation coins add <amount>");
     }
 
+    private void handleAttributesCommand(CommandSender sender) {
+        if (!(sender instanceof Player player)) {
+            sender.sendMessage(PREFIX + ChatColor.RED + "Only players can use this command.");
+            return;
+        }
+
+        PlayerProfile profile = getProfile(player);
+
+        if (profile == null) {
+            sender.sendMessage(PREFIX + ChatColor.RED + "Your profile is not loaded.");
+            return;
+        }
+
+        sender.sendMessage(ChatColor.GOLD + "============== ATTRIBUTES ==============");
+
+        for (Attribute attribute : Attribute.values()) {
+            double value = profile.getAttributes().get(attribute);
+
+            sender.sendMessage(
+                    ChatColor.YELLOW + formatAttribute(attribute)
+                            + ChatColor.GRAY + " : "
+                            + ChatColor.WHITE + value
+            );
+        }
+
+        sender.sendMessage(ChatColor.GOLD + "========================================");
+    }
+
+    private void handleAttributeTestCommand(CommandSender sender) {
+        if (!(sender instanceof Player player)) {
+            sender.sendMessage(PREFIX + ChatColor.RED + "Only players can use this command.");
+            return;
+        }
+
+        PlayerProfile profile = getProfile(player);
+
+        if (profile == null) {
+            sender.sendMessage(PREFIX + ChatColor.RED + "Your profile is not loaded.");
+            return;
+        }
+
+        profile.getAttributes().clearModifiers("test_sword");
+
+        profile.getAttributes().addModifier(new AttributeModifier(
+                "test_sword",
+                Attribute.STRENGTH,
+                ModifierOperation.ADD_FLAT,
+                50
+        ));
+
+        sender.sendMessage(PREFIX + ChatColor.GREEN + "Test sword modifier applied: +50 Strength.");
+    }
+
+    private void handleTestItemCommand(CommandSender sender) {
+        if (!(sender instanceof Player player)) {
+            sender.sendMessage(PREFIX + ChatColor.RED + "Only players can use this command.");
+            return;
+        }
+
+        FoundationItem testSword = itemRegistry.get("test_sword");
+
+        if (testSword == null) {
+            sender.sendMessage(PREFIX + ChatColor.RED + "Training Sword is not registered.");
+            return;
+        }
+
+        ItemStackFactory factory = new ItemStackFactory(itemDataKeys);
+
+        player.getInventory().addItem(
+                factory.create(Material.IRON_SWORD, testSword)
+        );
+
+        player.sendMessage(PREFIX + ChatColor.GREEN + "You received a Training Sword.");
+    }
+
+    private PlayerProfile getProfile(Player player) {
+        PlayerProfileService profileService = engine.services().get(PlayerProfileService.class);
+        return profileService.get(player);
+    }
+
     private void sendFoundationMessage(CommandSender sender, ConfigService configService) {
         sender.sendMessage(configService.getMessage(
                 "messages.awakened",
@@ -207,6 +300,9 @@ public final class FoundationCore extends JavaPlugin {
         sender.sendMessage(ChatColor.GRAY + "/foundation coins" + ChatColor.WHITE + " - Shows your coins.");
         sender.sendMessage(ChatColor.GRAY + "/foundation coins add <amount>" + ChatColor.WHITE + " - Adds coins for testing.");
         sender.sendMessage(ChatColor.GRAY + "/foundation attributes" + ChatColor.WHITE + " - Shows all player attributes.");
+        sender.sendMessage(ChatColor.GRAY + "/foundation attributetest" + ChatColor.WHITE + " - Adds a temporary test Strength modifier.");
+        sender.sendMessage(ChatColor.GRAY + "/foundation testitem" + ChatColor.WHITE + " - Gives a test sword.");
+        sender.sendMessage(ChatColor.GRAY + "/foundation clearattributes" + ChatColor.WHITE + " - Clears temporary attribute modifiers.");
     }
 
     private void sendVersionMessage(CommandSender sender) {
@@ -216,8 +312,7 @@ public final class FoundationCore extends JavaPlugin {
     }
 
     private void sendProfileMessage(CommandSender sender, Player player) {
-        PlayerProfileService profileService = engine.services().get(PlayerProfileService.class);
-        PlayerProfile profile = profileService.get(player);
+        PlayerProfile profile = getProfile(player);
 
         if (profile == null) {
             sender.sendMessage(PREFIX + ChatColor.RED + "Your profile is not loaded.");
@@ -234,16 +329,27 @@ public final class FoundationCore extends JavaPlugin {
         sender.sendMessage(ChatColor.GOLD + "=============================================");
     }
 
-    private void handleAttributesCommand(CommandSender sender) {
+    private String formatAttribute(Attribute attribute) {
+        String name = attribute.name().toLowerCase().replace("_", " ");
+        String[] words = name.split(" ");
 
+        StringBuilder builder = new StringBuilder();
+
+        for (String word : words) {
+            builder.append(Character.toUpperCase(word.charAt(0)));
+            builder.append(word.substring(1));
+            builder.append(" ");
+        }
+
+        return builder.toString().trim();
+    }
+    private void handleClearAttributesCommand(CommandSender sender) {
         if (!(sender instanceof Player player)) {
             sender.sendMessage(PREFIX + ChatColor.RED + "Only players can use this command.");
             return;
         }
 
-        PlayerProfileService profileService =
-                engine.services().get(PlayerProfileService.class);
-
+        PlayerProfileService profileService = engine.services().get(PlayerProfileService.class);
         PlayerProfile profile = profileService.get(player);
 
         if (profile == null) {
@@ -251,43 +357,12 @@ public final class FoundationCore extends JavaPlugin {
             return;
         }
 
-        sender.sendMessage(ChatColor.GOLD + "============== ATTRIBUTES ==============");
+        profile.getAttributes().clearModifiers("test_sword");
+        profile.getAttributes().clearModifiers("held_item");
 
-        for (Attribute attribute : Attribute.values()) {
+        profile.getAttributes().set(Attribute.STRENGTH, Attribute.STRENGTH.getDefaultValue());
+        profile.getAttributes().set(Attribute.CRIT_DAMAGE, Attribute.CRIT_DAMAGE.getDefaultValue());
 
-            double value = profile.getAttributes().get(attribute);
-
-            sender.sendMessage(
-                    ChatColor.YELLOW +
-                            formatAttribute(attribute) +
-                            ChatColor.GRAY +
-                            " : " +
-                            ChatColor.WHITE +
-                            value
-            );
-        }
-
-        sender.sendMessage(ChatColor.GOLD + "========================================");
-    }
-    private String formatAttribute(Attribute attribute) {
-
-        String name = attribute.name().toLowerCase().replace("_", " ");
-
-        String[] words = name.split(" ");
-
-        StringBuilder builder = new StringBuilder();
-
-        for (String word : words) {
-
-            builder.append(
-                    Character.toUpperCase(word.charAt(0))
-            );
-
-            builder.append(word.substring(1));
-
-            builder.append(" ");
-        }
-
-        return builder.toString().trim();
+        sender.sendMessage(PREFIX + ChatColor.GREEN + "Temporary attribute modifiers cleared.");
     }
 }
